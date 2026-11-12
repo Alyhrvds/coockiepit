@@ -319,11 +319,20 @@ function renderHoje(hoje){
   const out=[];
   if(!S.rotinas.length) return [vazio("Nenhuma rotina cadastrada ainda.","Me conte suas tarefas no chat ou cadastre na aba Rotinas.")];
   if(atrasados.length) out.push(h("section",{class:"group"}, h("div",{class:"gh"},h("h2",{},"Atrasados"),h("span",{class:"meta"},atrasados.length+" pendente"+(atrasados.length>1?"s":""))), atrasados.map(x=>linhaItem(x.r,hoje,x.venc,true))));
-  const pend=lista.filter(x=>!feito(x.r,hoje)).length;
-  out.push(h("section",{class:"group"}, h("div",{class:"gh"},h("h2",{},"Para hoje"),h("span",{class:"meta"}, lista.length?(lista.length-pend)+" de "+lista.length+" concluídas":"")),
-    lista.length ? lista.map(x=>linhaItem(x.r,hoje,x.venc,false)) : vazio(isUtil(hoje)?"Nada vencendo hoje.":"Hoje não é dia útil.", isUtil(hoje)?"Veja as abas Semanal e Mensal para adiantar algo.":"Bom descanso. As rotinas voltam no próximo dia útil.")));
+  const pendentes=lista.filter(x=>!feito(x.r,hoje)), feitasHoje=lista.filter(x=>feito(x.r,hoje));
+  out.push(h("section",{class:"group"}, h("div",{class:"gh"},h("h2",{},"Para hoje"),h("span",{class:"meta"}, lista.length?feitasHoje.length+" de "+lista.length+" concluídas":"")),
+    pendentes.length ? pendentes.map(x=>linhaItem(x.r,hoje,x.venc,false))
+      : lista.length ? vazio("Tudo feito por hoje!","As concluídas estão logo abaixo.")
+      : vazio(isUtil(hoje)?"Nada vencendo hoje.":"Hoje não é dia útil.", isUtil(hoje)?"Veja as abas Semanal e Mensal para adiantar algo.":"Bom descanso. As rotinas voltam no próximo dia útil.")));
   const abertas=tarefas().filter(t=>!feito(t,hoje)).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
   if(abertas.length) out.push(h("section",{class:"group"}, h("div",{class:"gh"},h("h2",{},"Tarefas avulsas"),h("span",{class:"meta"},abertas.length+" aberta"+(abertas.length>1?"s":""))), abertas.map(t=>itemTarefa(t,hoje,false))));
+  if(feitasHoje.length){
+    const det=h("details",{class:"group",id:"feitas-hoje"}, h("summary",{class:"gh",style:"cursor:pointer;list-style:none"}, h("h2",{},"Concluídas hoje ("+feitasHoje.length+")"), h("span",{class:"meta"},"clique para ver")),
+      h("div",{style:"display:flex;flex-direction:column;gap:8px;margin-top:8px"}, feitasHoje.map(x=>linhaItem(x.r,hoje,x.venc,false))));
+    if(S.feitasAbertas) det.open=true;
+    det.addEventListener("toggle",()=>{ S.feitasAbertas=det.open; });
+    out.push(det);
+  }
   return out;
 }
 function renderFreq(freq, hoje){
